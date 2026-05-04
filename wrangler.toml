@@ -1,0 +1,22 @@
+name = "writelens"
+main = "src/index.ts"
+compatibility_date = "2026-04-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "public"
+binding = "ASSETS"
+
+[ai]
+binding = "AI"
+
+[[kv_namespaces]]
+binding = "WL_RATE"
+id = "a7ac2916149c418090b59c6ae67c388b"
+
+[[kv_namespaces]]
+binding = "WL_KEYS"
+id = "b008e94354184bd68395837f9054ea11"
+
+[observability]
+enabled = true
