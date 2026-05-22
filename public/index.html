@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WriteLens — text quality scoring API ($0.01 / call)</title>
+<meta name="description" content="POST text, get back clarity / persuasiveness / structure / factuality scores. Free 50 calls/day, then 1¢/call. Drop-in API for any product that needs quality signals.">
+<style>
+:root { --bg:#08090c; --fg:#f0f4f8; --muted:#7d8896; --accent:#22d3ee; --good:#4ade80; --card:#13161c; --border:#1c2129; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,system-ui,sans-serif;line-height:1.6;padding:32px 16px;max-width:760px;margin:0 auto;font-size:16px}
+header{text-align:center;padding:24px 0 32px}
+h1{font-size:42px;letter-spacing:-0.03em}
+h1 .lens{color:var(--accent)}
+.tag{color:var(--muted);font-size:18px;margin-top:6px}
+section{margin:32px 0}
+h2{font-size:22px;margin-bottom:12px}
+.demo{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px}
+textarea{width:100%;min-height:140px;background:#0a0c10;color:var(--fg);border:1px solid var(--border);border-radius:6px;padding:12px;font-family:ui-monospace,monospace;font-size:13px;resize:vertical}
+button{background:var(--accent);color:#000;border:0;padding:10px 20px;border-radius:6px;font-weight:600;cursor:pointer;margin-top:8px}
+button:hover{filter:brightness(1.1)}
+.result{margin-top:14px;background:#0a0c10;border-radius:6px;padding:14px;font-family:ui-monospace,monospace;font-size:13px;white-space:pre-wrap;border:1px solid var(--border);min-height:40px;color:var(--muted)}
+.code{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:12px;font-family:ui-monospace,monospace;font-size:13px;white-space:pre;overflow-x:auto}
+.pricing{display:grid;gap:16px;grid-template-columns:1fr 1fr}
+@media(max-width:600px){.pricing{grid-template-columns:1fr}}
+.tier{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px}
+.tier h3{font-size:17px}
+.tier .price{font-size:28px;font-weight:700;margin:6px 0}
+.tier ul{list-style:none;font-size:13px;color:var(--muted)}
+.tier li{padding:3px 0}
+.tier li::before{content:"→ ";color:var(--good)}
+form input{background:var(--card);border:1px solid var(--border);color:var(--fg);padding:9px;border-radius:4px;font-size:14px;width:100%;margin-bottom:8px}
+footer{text-align:center;color:var(--muted);font-size:13px;border-top:1px solid var(--border);padding-top:14px;margin-top:36px}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.score{display:inline-block;padding:2px 8px;border-radius:10px;background:var(--card);border:1px solid var(--border);font-size:13px;margin-right:6px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Write<span class="lens">Lens</span></h1>
+  <p class="tag">Quality scores for any text. <code>POST /v1/score</code> → JSON.</p>
+</header>
+
+<section>
+  <h2>Try it</h2>
+  <div class="demo">
+    <textarea id="t" placeholder="Paste text…">In this article we will discuss the various factors that may potentially impact certain things. Some experts believe that things might be affected. However, others say it could go differently. The truth is somewhere in between, perhaps.</textarea>
+    <button onclick="score()">Score</button>
+    <div id="r" class="result">—</div>
+  </div>
+</section>
+
+<section>
+  <h2>API</h2>
+  <p><code>POST /v1/score</code></p>
+  <div class="code">curl -X POST https://writelens.ivixivi.workers.dev/v1/score \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer wl_yourkey"  # optional for paid tier \
+  -d '{"text":"your text here"}'</div>
+
+  <p style="margin-top:14px">Returns:</p>
+  <div class="code">{
+  "clarity": 4,
+  "persuasiveness": 3,
+  "structure": 5,
+  "factuality_concerns": ["unsubstantiated claims about 'experts'"],
+  "overall": 4,
+  "suggestions": [
+    "Replace 'various factors' with the actual factors",
+    "Cite specific experts or remove the appeal to authority"
+  ],
+  "char_count": 312
+}</div>
+</section>
+
+<section>
+  <h2>Pricing</h2>
+  <div class="pricing">
+    <div class="tier">
+      <h3>Free</h3>
+      <div class="price">$0</div>
+      <ul>
+        <li>50 calls / day / IP</li>
+        <li>No API key needed</li>
+        <li>Web demo</li>
+      </ul>
+    </div>
+    <div class="tier">
+      <h3>Metered</h3>
+      <div class="price">$0.01 <small style="font-size:14px;color:var(--muted)">/ call</small></div>
+      <ul>
+        <li>API key + Bearer auth</li>
+        <li>$10 soft cap (raises with billing)</li>
+        <li>For: AI agents, scripts, products</li>
+        <li>Pay-per-use, no subscription</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Get an API key</h2>
+  <p style="color:var(--muted);font-size:14px">Email-only signup. Key shown once. Calls metered until billing wires up — soft cap 1000 calls / $10.</p>
+  <form onsubmit="event.preventDefault(); requestKey()">
+    <input id="email" type="email" placeholder="you@example.com" required>
+    <button type="submit">Get key</button>
+  </form>
+  <div id="key-out" class="result" style="margin-top:10px">—</div>
+</section>
+
+<section>
+  <h2>Why</h2>
+  <p>Most "is this writing good" tools are aimed at humans. WriteLens is aimed at <em>code</em> — a single endpoint your product calls when it needs to grade a draft, filter low-quality content, or route based on style. Built for AI agents, content pipelines, moderation systems, and engineers who need a quality signal without standing up an LLM stack.</p>
+</section>
+
+<footer>
+  <p>WriteLens • <a href="/v1/score">API root</a></p>
+  <p style="margin-top:10px">Sister products:</p>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:6px">
+    <a style="background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:14px;font-size:12px;text-decoration:none" href="https://promptscope.ivixivi.workers.dev">PromptScope</a>
+    <a style="background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:14px;font-size:12px;text-decoration:none" href="https://edgarflash.ivixivi.workers.dev">EdgarFlash</a>
+    <a style="background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:14px;font-size:12px;text-decoration:none" href="https://bountyscope.ivixivi.workers.dev">BountyScope</a>
+    <a style="background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:14px;font-size:12px;text-decoration:none" href="https://trendpulse.ivixivi.workers.dev">TrendPulse</a>
+    <a style="background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:14px;font-size:12px;text-decoration:none" href="https://vulnpulse.ivixivi.workers.dev">VulnPulse</a>
+  </div>
+</footer>
+
+<script>
+async function score() {
+  const t = document.getElementById('t').value;
+  const r = document.getElementById('r');
+  r.textContent = 'scoring…';
+  try {
+    const resp = await fetch('/v1/score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: t }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) { r.textContent = 'Error: ' + (data.error || resp.status); return; }
+    const fc = (data.factuality_concerns || []).map(x => '• ' + x).join('\n') || '(none)';
+    const sg = (data.suggestions || []).map(x => '• ' + x).join('\n') || '(none)';
+    r.innerHTML = `<span class="score">overall ${data.overall}/10</span><span class="score">clarity ${data.clarity}</span><span class="score">persuasion ${data.persuasiveness}</span><span class="score">structure ${data.structure}</span>\n\n<strong>Concerns</strong>\n${escapeHtml(fc)}\n\n<strong>Suggestions</strong>\n${escapeHtml(sg)}`;
+    if (data.quota_remaining !== undefined) r.innerHTML += `\n\n<em>${data.quota_remaining} free calls remaining today</em>`;
+  } catch (e) {
+    r.textContent = 'Network: ' + e.message;
+  }
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function requestKey() {
+  const email = document.getElementById('email').value;
+  const out = document.getElementById('key-out');
+  out.textContent = 'requesting…';
+  try {
+    const r = await fetch('/api/key/request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const d = await r.json();
+    if (!r.ok) { out.textContent = 'Error: ' + d.error; return; }
+    out.innerHTML = `<strong>API key (saved once — copy now)</strong>\n${escapeHtml(d.api_key)}\n\nID: ${escapeHtml(d.id)}\nRate: ${escapeHtml(d.rate)}\nCap: $${(d.cap_cents/100).toFixed(2)}`;
+  } catch (e) { out.textContent = 'Network: ' + e.message; }
+}
+</script>
+
+</body>
+</html>
