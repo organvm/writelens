@@ -10,6 +10,9 @@ binding = "ASSETS"
 [ai]
 binding = "AI"
 
+[vars]
+PAYRAIL_URL = "https://payrail.ivixivi.workers.dev"
+
 [[kv_namespaces]]
 binding = "WL_RATE"
 id = "a7ac2916149c418090b59c6ae67c388b"
@@ -17,6 +20,10 @@ id = "a7ac2916149c418090b59c6ae67c388b"
 [[kv_namespaces]]
 binding = "WL_KEYS"
 id = "b008e94354184bd68395837f9054ea11"
+
+[[services]]
+binding = "PAYRAIL"
+service = "payrail"
 
 [observability]
 enabled = true
