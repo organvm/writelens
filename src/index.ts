@@ -14,6 +14,14 @@ interface Env {
   ASSETS: Fetcher;
   WL_RATE: KVNamespace;
   WL_KEYS: KVNamespace;
+  // Shared fleet money rail. PAYRAIL is a service binding (preferred — a direct
+  // internal worker→worker call that skips the public edge, so it dodges both the
+  // *.workers.dev same-zone restriction and edge bot-management). PAYRAIL_URL is the
+  // public-hostname fallback (used when the binding is absent, e.g. local/standby).
+  // SHIP_HMAC_SECRET (a wrangler secret, unset by default) signs receipt writes.
+  PAYRAIL?: Fetcher;
+  PAYRAIL_URL?: string;
+  SHIP_HMAC_SECRET?: string;
 }
 
 interface KeyRecord {
@@ -30,6 +38,63 @@ interface KeyRecord {
 const FREE_DAILY_LIMIT = 50;
 const MAX_TEXT_CHARS = 16_000;
 const PER_CALL_CENTS = 1;
+
+// === payrail (shared fleet money rail) ===
+// writelens plugs into the live payrail Worker instead of re-implementing
+// "wallet unset / no checkout". payrail returns where to send money + a memo
+// (quote_id); the buyer pays on-chain, then /api/confirm records the receipt
+// and mints an active API key. writelens is pay-per-use: a credits top-up is a
+// $10 USDC payment that grants a $10-cap metered key (1000 calls @ 1¢).
+const PAYRAIL_DEFAULT = 'https://payrail.ivixivi.workers.dev';
+const CREDITS_PRICE = '10';            // $10 USDC credit top-up
+const CREDITS_CAP_CENTS = 1000;        // $10 soft cap = 1000 calls @ 1¢
+const CREDITS_TO_GRANT = 1000;         // calls unlocked per top-up
+
+interface PayrailQuote {
+  quote_id: string;
+  pay_to: { rail: string; chain: string; asset: string; address: string; amount: string } | null;
+  checkout: string | null;
+  instructions: string;
+  expires_in_seconds: number;
+}
+
+// Single egress point to payrail. Prefers the service binding (an internal
+// worker→worker call that never touches the public edge → immune to both the
+// *.workers.dev same-zone restriction and edge bot-management). Falls back to the
+// public hostname with a browser UA so even the fallback clears bot filters. When
+// the binding is used the host in the URL is ignored — only path/query/method/body.
+function payrailFetch(env: Env, path: string, init?: RequestInit): Promise<Response> {
+  if (env.PAYRAIL) return env.PAYRAIL.fetch(new Request(`https://payrail${path}`, init));
+  const base = env.PAYRAIL_URL ?? PAYRAIL_DEFAULT;
+  const headers = new Headers(init?.headers);
+  if (!headers.has('user-agent')) {
+    headers.set('user-agent', 'Mozilla/5.0 (compatible; writelens/1.0; +https://writelens.ivixivi.workers.dev)');
+  }
+  return fetch(base + path, { ...init, headers });
+}
+
+async function payrailCreditsQuote(env: Env): Promise<PayrailQuote> {
+  const qs = new URLSearchParams({
+    ship: 'writelens',
+    sku: 'writelens:credits',
+    amount: CREDITS_PRICE,
+    currency: 'USDC',
+  });
+  const r = await payrailFetch(env, `/pay?${qs.toString()}`);
+  if (!r.ok) throw new Error(`payrail /pay ${r.status}`);
+  return r.json();
+}
+
+// HMAC-SHA256 hex, byte-identical to payrail's hmac() so timingSafeEqual passes.
+// Only used when SHIP_HMAC_SECRET is set (payrail has none today → optional).
+async function hmacHex(secret: string, message: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(message));
+  return [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
 const SYSTEM_PROMPT = `You are WriteLens, an expert evaluator of writing quality.
 
@@ -212,11 +277,128 @@ async function handleKeyStatus(req: Request, env: Env, id: string): Promise<Resp
   });
 }
 
+// === payrail-backed credit top-up ===
+
+// A buyer POSTs { email } to buy a $10 USDC credit top-up. We get a live quote
+// from the shared payrail rail and return a 402 carrying the on-chain address +
+// memo (quote_id). The buyer pays, then POSTs the tx hash to /api/confirm to mint
+// an active metered API key. No more "wired-but-unset" failure.
+async function handleSubscribe(req: Request, env: Env): Promise<Response> {
+  if (req.method !== 'POST') return new Response('method not allowed', { status: 405 });
+  let body: any;
+  try { body = await req.json(); } catch { return Response.json({ error: 'invalid JSON' }, { status: 400 }); }
+  const email = String(body?.email ?? '').trim().toLowerCase();
+  if (!email || !email.includes('@')) return Response.json({ error: 'valid email required' }, { status: 400 });
+
+  let q: PayrailQuote;
+  try {
+    q = await payrailCreditsQuote(env);
+  } catch (err) {
+    return Response.json({ error: 'rail_unavailable', detail: String(err) }, { status: 502 });
+  }
+  await env.WL_KEYS.put(
+    `pending:${q.quote_id}`,
+    JSON.stringify({ email, quote_id: q.quote_id, credits_to_grant: CREDITS_TO_GRANT }),
+    { expirationTtl: 60 * 60 * 24 * 7 },
+  );
+  return Response.json({
+    status: 'payment_required',
+    tier: 'credits',
+    quote_id: q.quote_id,
+    pay_to: q.pay_to,
+    checkout: q.checkout,
+    instructions: q.instructions,
+    expires_in_seconds: q.expires_in_seconds,
+    confirm_url: '/api/confirm',
+  }, { status: 402 });
+}
+
+// A buyer who paid posts { quote_id, tx_hash }. We forward it to payrail
+// /receipt — the receipt's payer_ref == tx_hash is the TIER-1 artifact — then
+// mint an active metered KeyRecord (cap $10, owed $0) and return the raw key once.
+async function handleConfirm(req: Request, env: Env): Promise<Response> {
+  if (req.method !== 'POST') return new Response('method not allowed', { status: 405 });
+  let body: any;
+  try { body = await req.json(); } catch { return Response.json({ error: 'invalid JSON' }, { status: 400 }); }
+  const quote_id = String(body?.quote_id ?? '');
+  const tx_hash = String(body?.tx_hash ?? '');
+  if (!quote_id || !tx_hash) {
+    return Response.json({ error: 'quote_id and tx_hash required' }, { status: 400 });
+  }
+  const pendingRaw = await env.WL_KEYS.get(`pending:${quote_id}`);
+  if (!pendingRaw) return Response.json({ error: 'quote_not_found_or_expired' }, { status: 404 });
+  const pending = JSON.parse(pendingRaw) as { email: string; quote_id: string; credits_to_grant: number };
+
+  const payload = JSON.stringify({
+    quote_id,
+    ship: 'writelens',
+    sku: 'writelens:credits',
+    amount: CREDITS_PRICE,
+    currency: 'USDC',
+    rail: 'crypto',
+    tx_hash,
+  });
+  const headers: Record<string, string> = { 'content-type': 'application/json' };
+  if (env.SHIP_HMAC_SECRET) headers['x-payrail-signature'] = await hmacHex(env.SHIP_HMAC_SECRET, payload);
+
+  const rr = await payrailFetch(env, '/receipt', { method: 'POST', headers, body: payload });
+  if (!rr.ok) {
+    return Response.json(
+      { error: 'receipt_rejected', status: rr.status, detail: await rr.text().catch(() => '') },
+      { status: 502 },
+    );
+  }
+  const receiptResp = await rr.json().catch(() => ({})) as { ok?: boolean; receipt?: unknown };
+
+  const rawKey = newKeyId();
+  const hash = await sha256Hex(rawKey);
+  const id = newKeyId();
+  const record: KeyRecord = {
+    id,
+    key_hash: hash,
+    email: pending.email,
+    created_at: new Date().toISOString(),
+    call_count: 0,
+    cents_owed: 0,
+    active: true,
+    cap_cents: CREDITS_CAP_CENTS,
+  };
+  await env.WL_KEYS.put(`hash:${hash}`, JSON.stringify(record));
+  await env.WL_KEYS.put(`id:${id}`, JSON.stringify(record));
+  await env.WL_KEYS.put(`email:${pending.email}`, id);
+  await env.WL_KEYS.delete(`pending:${quote_id}`);
+
+  return Response.json({
+    ok: true,
+    tier: 'credits',
+    key: rawKey,  // pass as Bearer header — shown once
+    id,
+    cap_cents: CREDITS_CAP_CENTS,
+    rate: '$0.01 per call (1¢)',
+    note: 'Save this key — shown once. Send to /v1/score as Bearer token.',
+    receipt: receiptResp.receipt,
+  }, { status: 201 });
+}
+
+// Poll payment status by proxying payrail's public receipt lookup.
+async function handlePayStatus(req: Request, env: Env): Promise<Response> {
+  const url = new URL(req.url);
+  const quoteId = url.searchParams.get('quote_id');
+  if (!quoteId) return Response.json({ error: 'quote_id required' }, { status: 400 });
+  const r = await payrailFetch(env, `/receipt/${encodeURIComponent(quoteId)}`);
+  if (r.status === 404) return Response.json({ paid: false, quote_id: quoteId });
+  if (!r.ok) return Response.json({ error: 'status_unavailable', status: r.status }, { status: 502 });
+  return Response.json({ paid: true, receipt: await r.json() });
+}
+
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
     if (url.pathname === '/v1/score') return handleScore(req, env);
     if (url.pathname === '/api/key/request') return handleKeyRequest(req, env);
+    if (url.pathname === '/api/subscribe') return handleSubscribe(req, env);
+    if (url.pathname === '/api/confirm') return handleConfirm(req, env);
+    if (url.pathname === '/api/pay-status') return handlePayStatus(req, env);
     const m = url.pathname.match(/^\/api\/key\/([a-zA-Z0-9_-]+)$/);
     if (m) return handleKeyStatus(req, env, m[1]);
     return env.ASSETS.fetch(req);
