@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WriteLens — text quality scoring API ($0.01 / call)</title>
-<meta name="description" content="POST text, get back clarity / persuasiveness / structure / factuality scores. Free 50 calls/day, then 1¢/call. Drop-in API for any product that needs quality signals.">
+<title>WriteLens — text quality scoring API ($49 / 1000 calls)</title>
+<meta name="description" content="POST text, get back clarity / persuasiveness / structure / factuality scores. Free 50 calls/day, then $49 for 1000 authenticated API calls.">
 <style>
 :root { --bg:#08090c; --fg:#f0f4f8; --muted:#7d8896; --accent:#22d3ee; --good:#4ade80; --card:#13161c; --border:#1c2129; }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -56,7 +56,7 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
   <p><code>POST /v1/score</code></p>
   <div class="code">curl -X POST https://writelens.ivixivi.workers.dev/v1/score \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer wl_yourkey"  # optional for paid tier \
+  -H "Authorization: Bearer wl_yourkey" \
   -d '{"text":"your text here"}'</div>
 
   <p style="margin-top:14px">Returns:</p>
@@ -87,22 +87,22 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
       </ul>
     </div>
     <div class="tier">
-      <h3>Metered</h3>
-      <div class="price">$0.01 <small style="font-size:14px;color:var(--muted)">/ call</small></div>
+      <h3>Paid</h3>
+      <div class="price">$49 <small style="font-size:14px;color:var(--muted)">/ 1000 calls</small></div>
       <ul>
-        <li>API key + Bearer auth</li>
-        <li>$10 soft cap (raises with billing)</li>
+        <li>API key + Bearer or X-API-Key auth</li>
+        <li>1000 included calls per 30-day paid period</li>
         <li>For: AI agents, scripts, products</li>
-        <li>Pay-per-use, no subscription</li>
+        <li>Subscription-gated access</li>
       </ul>
-      <button onclick="upgrade('credits')" style="margin-top:12px;width:100%">Add $10 credits — pay with USDC</button>
+      <button onclick="upgrade('paid_1000')" style="margin-top:12px;width:100%">Subscribe - pay $49 USDC</button>
     </div>
   </div>
 </section>
 
 <section id="checkout" style="display:none">
-  <h2 id="checkout-title">Add credits</h2>
-  <p style="color:var(--muted);font-size:13px" id="checkout-sub">Top up $10 of credits with USDC on Base. You'll get an address and a unique memo — send, then paste your transaction hash to unlock instantly. No card, no account.</p>
+  <h2 id="checkout-title">Subscribe</h2>
+  <p style="color:var(--muted);font-size:13px" id="checkout-sub">Pay $49 USDC on Base for a paid API key with 1000 included calls for 30 days. You'll get an address and a unique memo - send, then paste your transaction hash to unlock instantly.</p>
   <form onsubmit="event.preventDefault(); startCheckout()" style="display:flex;gap:8px;margin-top:8px;align-items:flex-start">
     <input id="co-email" type="email" placeholder="you@company.com" style="flex:1;margin-bottom:0">
     <button type="submit" id="co-btn" style="margin-top:0;white-space:nowrap">Get payment details</button>
@@ -117,20 +117,11 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
     <p style="color:var(--muted);font-size:13px;margin-top:8px" id="q-instructions"></p>
     <form onsubmit="event.preventDefault(); confirmTx()" style="display:flex;gap:8px;margin-top:10px;align-items:flex-start">
       <input id="co-tx" type="text" placeholder="0x… transaction hash" style="flex:1;margin-bottom:0">
-      <button type="submit" id="co-confirm-btn" style="margin-top:0;white-space:nowrap">I've sent it — unlock</button>
+      <button type="submit" id="co-confirm-btn" style="margin-top:0;white-space:nowrap">I've sent it - unlock</button>
     </form>
   </div>
   <p style="font-size:13px;margin-top:8px" id="co-msg"></p>
-</section>
-
-<section>
-  <h2>Get an API key</h2>
-  <p style="color:var(--muted);font-size:14px">Email-only signup. Key shown once. Calls metered until billing wires up — soft cap 1000 calls / $10.</p>
-  <form onsubmit="event.preventDefault(); requestKey()">
-    <input id="email" type="email" placeholder="you@example.com" required>
-    <button type="submit">Get key</button>
-  </form>
-  <div id="key-out" class="result" style="margin-top:10px">—</div>
+  <div id="co-key" class="result" style="display:none;margin-top:10px">—</div>
 </section>
 
 <section>
@@ -176,31 +167,18 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-async function requestKey() {
-  const email = document.getElementById('email').value;
-  const out = document.getElementById('key-out');
-  out.textContent = 'requesting…';
-  try {
-    const r = await fetch('/api/key/request', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
-    const d = await r.json();
-    if (!r.ok) { out.textContent = 'Error: ' + d.error; return; }
-    out.innerHTML = `<strong>API key (saved once — copy now)</strong>\n${escapeHtml(d.api_key)}\n\nID: ${escapeHtml(d.id)}\nRate: ${escapeHtml(d.rate)}\nCap: $${(d.cap_cents/100).toFixed(2)}`;
-  } catch (e) { out.textContent = 'Network: ' + e.message; }
-}
-
 let CO = { tier: null, quote_id: null, address: null, confirm_url: '/api/confirm' };
 
 function upgrade(tier) {
   CO.tier = tier;
-  document.getElementById('checkout-title').textContent = 'Add $10 credits — pay with USDC';
+  document.getElementById('checkout-title').textContent = 'Subscribe - pay $49 USDC';
   const sec = document.getElementById('checkout');
   sec.style.display = '';
   document.getElementById('co-quote').style.display = 'none';
   document.getElementById('co-msg').textContent = '';
+  const keyBox = document.getElementById('co-key');
+  keyBox.style.display = 'none';
+  keyBox.textContent = '—';
   sec.scrollIntoView({ behavior: 'smooth' });
   document.getElementById('co-email').focus();
 }
@@ -232,7 +210,7 @@ async function startCheckout() {
       msg.style.color = 'var(--accent)'; msg.textContent = d.error || 'could not start checkout';
     }
   } catch (e) {
-    msg.style.color = 'var(--accent)'; msg.textContent = 'network error — try again';
+    msg.style.color = 'var(--accent)'; msg.textContent = 'network error - try again';
   } finally {
     btn.disabled = false; btn.textContent = 'Get payment details';
   }
@@ -259,12 +237,19 @@ async function confirmTx() {
       body: JSON.stringify({ quote_id: CO.quote_id, tx_hash: tx })
     });
     const d = await r.json();
-    if (r.ok) { msg.style.color = 'var(--good)'; msg.textContent = '✓ $10 credits added — receipt recorded. We\'ll email your API key and credit balance.'; }
-    else { msg.style.color = 'var(--accent)'; msg.textContent = d.error || 'payment not verified yet — on-chain confirmation can take a moment, try again shortly'; }
+    if (r.ok) {
+      const key = d.api_key || d.key;
+      const keyBox = document.getElementById('co-key');
+      msg.style.color = 'var(--good)';
+      msg.textContent = 'Subscription active. Save the API key shown below.';
+      keyBox.style.display = '';
+      keyBox.innerHTML = `<strong>API key (shown once)</strong>\n${escapeHtml(key)}\n\nID: ${escapeHtml(d.id)}\nPlan: $49 / ${escapeHtml(d.quota_calls)} calls\nPeriod ends: ${escapeHtml(d.period_end)}`;
+    }
+    else { msg.style.color = 'var(--accent)'; msg.textContent = d.error || 'payment not verified yet - on-chain confirmation can take a moment, try again shortly'; }
   } catch (e) {
-    msg.style.color = 'var(--accent)'; msg.textContent = 'network error — try again';
+    msg.style.color = 'var(--accent)'; msg.textContent = 'network error - try again';
   } finally {
-    btn.disabled = false; btn.textContent = "I've sent it — unlock";
+    btn.disabled = false; btn.textContent = "I've sent it - unlock";
   }
 }
 </script>
