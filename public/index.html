@@ -124,6 +124,17 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
   <div id="co-key" class="result" style="display:none;margin-top:10px">—</div>
 </section>
 
+<section id="dashboard">
+  <h2>Dashboard</h2>
+  <p style="color:var(--muted);font-size:13px">Check your API key usage and subscription status using your Key ID.</p>
+  <form onsubmit="event.preventDefault(); checkStatus()" style="display:flex;gap:8px;margin-top:8px;align-items:flex-start">
+    <input id="dash-id" type="text" placeholder="Key ID (e.g., wl_...)" style="flex:1;margin-bottom:0">
+    <button type="submit" id="dash-btn" style="margin-top:0;white-space:nowrap">Check usage</button>
+  </form>
+  <p style="font-size:13px;margin-top:8px" id="dash-msg"></p>
+  <div id="dash-result" class="result" style="display:none;margin-top:10px">—</div>
+</section>
+
 <section>
   <h2>Why</h2>
   <p>Most "is this writing good" tools are aimed at humans. WriteLens is aimed at <em>code</em> — a single endpoint your product calls when it needs to grade a draft, filter low-quality content, or route based on style. Built for AI agents, content pipelines, moderation systems, and engineers who need a quality signal without standing up an LLM stack.</p>
@@ -250,6 +261,48 @@ async function confirmTx() {
     msg.style.color = 'var(--accent)'; msg.textContent = 'network error - try again';
   } finally {
     btn.disabled = false; btn.textContent = "I've sent it - unlock";
+  }
+}
+
+async function checkStatus() {
+  const btn = document.getElementById('dash-btn');
+  const idInput = document.getElementById('dash-id').value.trim();
+  const msg = document.getElementById('dash-msg');
+  const resultBox = document.getElementById('dash-result');
+  
+  if (!idInput) { msg.style.color = 'var(--accent)'; msg.textContent = 'enter your key ID'; return; }
+  
+  btn.disabled = true; btn.textContent = 'checking...';
+  msg.textContent = '';
+  resultBox.style.display = 'none';
+  
+  try {
+    const r = await fetch('/api/key/' + encodeURIComponent(idInput));
+    const d = await r.json();
+    if (r.ok) {
+      msg.style.color = 'var(--good)';
+      msg.textContent = 'Status retrieved';
+      resultBox.style.display = '';
+      
+      const pStart = d.period_start ? new Date(d.period_start).toLocaleDateString() : 'N/A';
+      const pEnd = d.period_end ? new Date(d.period_end).toLocaleDateString() : 'N/A';
+      const statusStr = d.active ? 'Active' : 'Inactive';
+      const subStatus = d.subscription_status ? ` (${d.subscription_status})` : '';
+      
+      resultBox.innerHTML = `<strong>Key ID:</strong> ${escapeHtml(d.id)}
+<strong>Status:</strong> ${statusStr}${subStatus}
+<strong>Plan:</strong> ${escapeHtml(d.plan || 'Free / Unknown')}
+<strong>Period:</strong> ${pStart} to ${pEnd}
+<strong>Usage this period:</strong> ${d.calls_this_period} / ${d.quota_calls} calls
+<strong>Remaining:</strong> ${d.paid_calls_remaining} calls`;
+    } else {
+      msg.style.color = 'var(--accent)';
+      msg.textContent = d.error || 'key not found';
+    }
+  } catch (e) {
+    msg.style.color = 'var(--accent)'; msg.textContent = 'network error - try again';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Check usage';
   }
 }
 </script>
