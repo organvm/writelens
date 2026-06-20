@@ -12,10 +12,12 @@ need a fast, cheap quality signal in their pipeline.
 
 ```
 POST /v1/score              — Score one text payload
-POST /api/subscribe         — Start paid checkout for a $49 / 1000-call API key
-POST /api/confirm           — Confirm payment and mint the API key shown once
+POST /api/subscribe         — Create a Stripe Checkout session for the paid tier
+POST /api/checkout/claim    — Verify a paid Checkout session and mint the key once
+GET  /api/checkout/status   — Checkout payment/claim status by session_id
+GET  /api/license           — Subscription/license status for an API key
 GET  /api/key/:id           — Per-key subscription and usage status
-GET  /api/pay-status        — Payment receipt status by quote_id
+POST /api/stripe/webhook    — Stripe subscription lifecycle webhook
 ```
 
 Paid requests use either `Authorization: Bearer wl_...` or `X-API-Key: wl_...`.
@@ -27,8 +29,32 @@ Requests without a key use the free IP-based quota.
 - Paid: $49 / 1000 calls for a 30-day paid period
 - Volume: contact for >100K/mo
 
-Checkout is backed by the shared payrail service. Payment confirmation records the
-receipt and returns the raw API key once.
+Checkout is backed by Stripe Checkout. Payment confirmation verifies the paid
+Checkout Session against Stripe, records the subscription entitlement, and returns
+the raw API key once.
+
+## Billing setup
+
+Create a recurring Stripe Price for the $49 / 1000-call plan, then configure:
+
+```
+wrangler secret put STRIPE_SECRET_KEY
+wrangler secret put STRIPE_WEBHOOK_SECRET
+```
+
+Set `STRIPE_PRICE_ID` in `wrangler.toml` or as an environment variable. Keep
+`PUBLIC_BASE_URL` pointed at the deployed Worker origin so Checkout redirects back
+to `/?checkout=success&session_id={CHECKOUT_SESSION_ID}`.
+
+Register the Stripe webhook endpoint:
+
+```
+https://writelens.ivixivi.workers.dev/api/stripe/webhook
+```
+
+Subscribe it to `checkout.session.completed`, `customer.subscription.created`,
+`customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`,
+`invoice.payment_succeeded`, and `invoice.payment_failed`.
 
 ## Use cases
 
