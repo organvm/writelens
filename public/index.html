@@ -3,8 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WriteLens — text quality scoring API ($49 / 1000 calls)</title>
-<meta name="description" content="POST text, get back clarity / persuasiveness / structure / factuality scores. Free 50 calls/day, then $49 for 1000 authenticated API calls.">
+<title>WriteLens — an instant, honest read on any piece of writing</title>
+<meta name="description" content="Paste a paragraph and get back clarity, persuasiveness, structure, and the sentences where the facts get shaky — with one concrete change to make first. Free to try, no signup. A clean API underneath for the tools that need it.">
+<meta property="og:title" content="WriteLens — an instant, honest read on any piece of writing">
+<meta property="og:description" content="Clarity, persuasiveness, structure, and where the facts get shaky — in about a second. Free to try.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
 <style>
 :root { --bg:#08090c; --fg:#f0f4f8; --muted:#7d8896; --accent:#22d3ee; --good:#4ade80; --card:#13161c; --border:#1c2129; }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -39,7 +43,7 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 
 <header>
   <h1>Write<span class="lens">Lens</span></h1>
-  <p class="tag">Quality scores for any text. <code>POST /v1/score</code> → JSON.</p>
+  <p class="tag">An instant, honest read on any piece of writing.</p>
 </header>
 
 <section>
@@ -92,10 +96,10 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
       <ul>
         <li>API key + Bearer or X-API-Key auth</li>
         <li>1000 included calls per 30-day paid period</li>
-        <li>For: AI agents, scripts, products</li>
+        <li>For: writing tools, editors, pipelines, and agents</li>
         <li>Subscription-gated access</li>
       </ul>
-      <button onclick="upgrade('paid_1000')" style="margin-top:12px;width:100%">Subscribe - pay $49 USDC</button>
+      <button onclick="upgrade('paid_1000')" style="margin-top:12px;width:100%">Subscribe — $49 / 1000 calls</button>
     </div>
   </div>
 </section>
@@ -126,19 +130,11 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 
 <section>
   <h2>Why</h2>
-  <p>Most "is this writing good" tools are aimed at humans. WriteLens is aimed at <em>code</em> — a single endpoint your product calls when it needs to grade a draft, filter low-quality content, or route based on style. Built for AI agents, content pipelines, moderation systems, and engineers who need a quality signal without standing up an LLM stack.</p>
+  <p>Most "is this good?" tools flatter you. WriteLens gives a working writer's read — <em>clarity, persuasiveness, structure</em>, and the sentences where the facts get shaky — with one concrete change to make first. Fast enough to run on every draft, honest enough to trust before you publish or hand it back to a student. Underneath is a clean API for the tools, pipelines, and agents that need the same signal at scale.</p>
 </section>
 
 <footer>
-  <p>WriteLens • <a href="/v1/score">API root</a></p>
-  <p style="margin-top:10px">Sister products:</p>
-  <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:6px">
-    <a style="background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:14px;font-size:12px;text-decoration:none" href="https://promptscope.ivixivi.workers.dev">PromptScope</a>
-    <a style="background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:14px;font-size:12px;text-decoration:none" href="https://edgarflash.ivixivi.workers.dev">EdgarFlash</a>
-    <a style="background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:14px;font-size:12px;text-decoration:none" href="https://bountyscope.ivixivi.workers.dev">BountyScope</a>
-    <a style="background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:14px;font-size:12px;text-decoration:none" href="https://trendpulse.ivixivi.workers.dev">TrendPulse</a>
-    <a style="background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:14px;font-size:12px;text-decoration:none" href="https://vulnpulse.ivixivi.workers.dev">VulnPulse</a>
-  </div>
+  <p>WriteLens — part of <a href="https://studio.objectlessons.film">Object Lessons Studio</a> · <a href="/v1/score">the API</a></p>
 </footer>
 
 <script>
@@ -171,7 +167,7 @@ let CO = { tier: null, quote_id: null, address: null, confirm_url: '/api/confirm
 
 function upgrade(tier) {
   CO.tier = tier;
-  document.getElementById('checkout-title').textContent = 'Subscribe - pay $49 USDC';
+  document.getElementById('checkout-title').textContent = 'Subscribe — $49 / 1000 calls';
   const sec = document.getElementById('checkout');
   sec.style.display = '';
   document.getElementById('co-quote').style.display = 'none';
