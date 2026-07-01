@@ -484,10 +484,30 @@ async function handlePayStatus(req: Request, env: Env): Promise<Response> {
   return Response.json({ paid: true, receipt: await r.json() });
 }
 
+// WriteLens is meant to be embedded ("a single endpoint your product calls"),
+// so /v1/score must be callable from browser JS on other origins (e.g. the
+// studio landing page). Scope CORS to the scoring endpoint only; key/billing
+// routes stay same-origin.
+const CORS_HEADERS: Record<string, string> = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
+  'Access-Control-Max-Age': '86400',
+};
+
+function withCors(resp: Response): Response {
+  const h = new Headers(resp.headers);
+  for (const [k, v] of Object.entries(CORS_HEADERS)) h.set(k, v);
+  return new Response(resp.body, { status: resp.status, statusText: resp.statusText, headers: h });
+}
+
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
-    if (url.pathname === '/v1/score') return handleScore(req, env);
+    if (url.pathname === '/v1/score') {
+      if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS });
+      return withCors(await handleScore(req, env));
+    }
     if (url.pathname === '/api/key/request') return handleKeyRequest(req, env);
     if (url.pathname === '/api/subscribe') return handleSubscribe(req, env);
     if (url.pathname === '/api/confirm') return handleConfirm(req, env);
