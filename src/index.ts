@@ -137,10 +137,17 @@ function newKeyId(): string {
 
 async function rateCheckIp(ip: string, env: Env): Promise<{ allowed: boolean; remaining: number }> {
   const key = `rl:${ip}:${new Date().toISOString().slice(0, 10)}`;
-  const cur = Number(await env.WL_RATE.get(key) ?? 0);
-  if (cur >= FREE_DAILY_LIMIT) return { allowed: false, remaining: 0 };
-  await env.WL_RATE.put(key, String(cur + 1), { expirationTtl: 60 * 60 * 26 });
-  return { allowed: true, remaining: FREE_DAILY_LIMIT - cur - 1 };
+  try {
+    const cur = Number(await env.WL_RATE.get(key) ?? 0);
+    if (cur >= FREE_DAILY_LIMIT) return { allowed: false, remaining: 0 };
+    await env.WL_RATE.put(key, String(cur + 1), { expirationTtl: 60 * 60 * 26 });
+    return { allowed: true, remaining: FREE_DAILY_LIMIT - cur - 1 };
+  } catch {
+    // KV unavailable (e.g. the free-tier daily put() cap is hit) — fail OPEN.
+    // A rate limiter exists to protect the expensive call; it must never be the
+    // thing that takes the endpoint down. Allow the request when bookkeeping fails.
+    return { allowed: true, remaining: FREE_DAILY_LIMIT };
+  }
 }
 
 async function getKeyRecord(rawKey: string, env: Env): Promise<KeyRecord | null> {
