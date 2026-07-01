@@ -6,80 +6,134 @@
 <title>WriteLens — an instant, honest read on any piece of writing</title>
 <meta name="description" content="Paste a paragraph and get back clarity, persuasiveness, structure, and the sentences where the facts get shaky — with one concrete change to make first. Free to try, no signup. A clean API underneath for the tools that need it.">
 <meta property="og:title" content="WriteLens — an instant, honest read on any piece of writing">
-<meta property="og:description" content="Clarity, persuasiveness, structure, and where the facts get shaky — in about a second. Free to try.">
+<meta property="og:description" content="Clarity, persuasiveness, structure, and where the facts get shaky — in about a second. Free to try, no signup.">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://writelens.ivixivi.workers.dev/">
+<meta property="og:image" content="https://writelens.ivixivi.workers.dev/og/writelens.png">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://writelens.ivixivi.workers.dev/og/writelens.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root { --bg:#08090c; --fg:#f0f4f8; --muted:#7d8896; --accent:#22d3ee; --good:#4ade80; --card:#13161c; --border:#1c2129; }
+:root{
+  --bg:#0c0b10; --bg-2:#131119; --ink:#f4f1ea; --muted:#a39fb0; --line:#26232f;
+  --accent:#e8b04b; --accent-2:#8a7cf0; --live:#4ec98a; --warn:#e88b5a; --card:#15131d;
+  --serif:"Fraunces",Georgia,serif; --sans:"Inter",system-ui,sans-serif; --mono:ui-monospace,"SF Mono",Menlo,monospace;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--fg);font-family:-apple-system,system-ui,sans-serif;line-height:1.6;padding:32px 16px;max-width:760px;margin:0 auto;font-size:16px}
-header{text-align:center;padding:24px 0 32px}
-h1{font-size:42px;letter-spacing:-0.03em}
-h1 .lens{color:var(--accent)}
-.tag{color:var(--muted);font-size:18px;margin-top:6px}
-section{margin:32px 0}
-h2{font-size:22px;margin-bottom:12px}
-.demo{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px}
-textarea{width:100%;min-height:140px;background:#0a0c10;color:var(--fg);border:1px solid var(--border);border-radius:6px;padding:12px;font-family:ui-monospace,monospace;font-size:13px;resize:vertical}
-button{background:var(--accent);color:#000;border:0;padding:10px 20px;border-radius:6px;font-weight:600;cursor:pointer;margin-top:8px}
-button:hover{filter:brightness(1.1)}
-.result{margin-top:14px;background:#0a0c10;border-radius:6px;padding:14px;font-family:ui-monospace,monospace;font-size:13px;white-space:pre-wrap;border:1px solid var(--border);min-height:40px;color:var(--muted)}
-.code{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:12px;font-family:ui-monospace,monospace;font-size:13px;white-space:pre;overflow-x:auto}
-.pricing{display:grid;gap:16px;grid-template-columns:1fr 1fr}
-@media(max-width:600px){.pricing{grid-template-columns:1fr}}
-.tier{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px}
-.tier h3{font-size:17px}
-.tier .price{font-size:28px;font-weight:700;margin:6px 0}
+html{scroll-behavior:smooth}
+body{background:radial-gradient(1100px 640px at 72% -10%,#1a1626 0%,var(--bg) 55%);
+  color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:760px;margin:0 auto;padding:0 24px}
+.top{display:flex;justify-content:space-between;align-items:center;height:64px;border-bottom:1px solid var(--line)}
+.top .word{font-family:var(--serif);font-weight:600;font-size:18px}
+.top .word .dot{color:var(--accent)}
+.top .back{font-size:14px;color:var(--muted)}
+.top .back:hover{color:var(--accent)}
+header.hero{padding:60px 0 8px;text-align:left}
+h1{font-family:var(--serif);font-weight:500;font-size:clamp(38px,7vw,62px);letter-spacing:-.01em;line-height:1}
+h1 .lens{font-style:italic;color:var(--accent)}
+.tag{color:var(--muted);font-size:20px;margin-top:14px;max-width:560px}
+section{margin:40px 0}
+h2{font-family:var(--serif);font-weight:500;font-size:26px;margin-bottom:14px}
+p{margin-bottom:16px}
+.demo{background:linear-gradient(135deg,#17131f,#121019);border:1px solid #2e2740;border-radius:16px;padding:20px}
+.demo .lab{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.demo .lab .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:.3s}
+.demo .lab .dot.on{background:var(--live);box-shadow:0 0 8px var(--live)}
+textarea{width:100%;min-height:120px;background:#0d0b12;color:var(--ink);border:1px solid var(--line);border-radius:11px;padding:13px 15px;font-family:var(--sans);font-size:15px;line-height:1.5;resize:vertical}
+textarea:focus{outline:none;border-color:var(--accent-2)}
+.demo-row{display:flex;gap:12px;align-items:center;margin-top:12px;flex-wrap:wrap}
+button{background:var(--accent);color:#1a1405;border:0;padding:12px 22px;border-radius:999px;font-weight:600;font-size:15px;cursor:pointer;font-family:var(--sans)}
+button:hover{filter:brightness(1.05)}
+.hint{font-size:13px;color:var(--muted)}
+.result{margin-top:16px;background:#0d0b12;border-radius:11px;padding:15px;font-family:var(--mono);font-size:13px;white-space:pre-wrap;border:1px solid var(--line);min-height:40px;color:var(--muted)}
+.score{display:inline-block;padding:2px 9px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:12px;margin:0 6px 6px 0;color:var(--ink)}
+.note{color:var(--warn);font-size:12px;margin-top:10px;display:block}
+.reads{display:grid;grid-template-columns:1fr 1fr;gap:14px 24px;margin-top:8px}
+@media(max-width:560px){.reads{grid-template-columns:1fr}}
+.reads .r b{font-family:var(--serif);color:var(--ink);font-weight:600}
+.reads .r span{color:var(--muted);font-size:14px}
+/* the fold: developer/API material lives below, clearly separated */
+.fold{border-top:1px solid var(--line);margin-top:56px;padding-top:16px}
+.fold .flab{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.code{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px;font-family:var(--mono);font-size:12.5px;white-space:pre;overflow-x:auto;color:var(--ink);margin-bottom:8px}
+.pricing{display:grid;gap:14px;grid-template-columns:1fr 1fr;margin-top:8px}
+@media(max-width:560px){.pricing{grid-template-columns:1fr}}
+.tier{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+.tier h3{font-family:var(--serif);font-size:18px}
+.tier .price{font-size:26px;font-weight:700;margin:6px 0;font-family:var(--serif)}
 .tier ul{list-style:none;font-size:13px;color:var(--muted)}
 .tier li{padding:3px 0}
-.tier li::before{content:"→ ";color:var(--good)}
-form input{background:var(--card);border:1px solid var(--border);color:var(--fg);padding:9px;border-radius:4px;font-size:14px;width:100%;margin-bottom:8px}
-footer{text-align:center;color:var(--muted);font-size:13px;border-top:1px solid var(--border);padding-top:14px;margin-top:36px}
-a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
-.score{display:inline-block;padding:2px 8px;border-radius:10px;background:var(--card);border:1px solid var(--border);font-size:13px;margin-right:6px}
+.tier li::before{content:"→ ";color:var(--live)}
+form input{background:#0d0b12;border:1px solid var(--line);color:var(--ink);padding:10px;border-radius:8px;font-size:14px;width:100%;margin-bottom:8px}
+footer{text-align:center;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding:22px 0 60px;margin-top:44px}
+footer a{color:var(--accent)}
 </style>
 </head>
 <body>
+<div class="wrap">
 
-<header>
+<div class="top">
+  <a class="word" href="https://studio.objectlessons.film">Object&nbsp;Lessons<span class="dot">.</span></a>
+  <a class="back" href="https://studio.objectlessons.film">← the studio</a>
+</div>
+
+<header class="hero">
   <h1>Write<span class="lens">Lens</span></h1>
   <p class="tag">An instant, honest read on any piece of writing.</p>
 </header>
 
 <section>
-  <h2>Try it</h2>
   <div class="demo">
-    <textarea id="t" placeholder="Paste text…">In this article we will discuss the various factors that may potentially impact certain things. Some experts believe that things might be affected. However, others say it could go differently. The truth is somewhere in between, perhaps.</textarea>
-    <button onclick="score()">Score</button>
+    <div class="lab"><span class="dot" id="liveDot"></span> <span id="liveLabel">WriteLens · quality score</span></div>
+    <textarea id="t" placeholder="Paste a paragraph…">In this article we will discuss the various factors that may potentially impact certain things. Some experts believe that things might be affected. However, others say it could go differently. The truth is somewhere in between, perhaps.</textarea>
+    <div class="demo-row">
+      <button onclick="score()">Score this paragraph →</button>
+      <span class="hint">Try your own draft. Free, no signup.</span>
+    </div>
     <div id="r" class="result">—</div>
   </div>
 </section>
 
 <section>
-  <h2>API</h2>
-  <p><code>POST /v1/score</code></p>
+  <h2>What it reads</h2>
+  <div class="reads">
+    <div class="r"><b>Clarity</b> — <span>can a reader hold the sentence on the first pass?</span></div>
+    <div class="r"><b>Persuasiveness</b> — <span>does the claim actually land, or just assert?</span></div>
+    <div class="r"><b>Structure</b> — <span>does the paragraph move, or circle?</span></div>
+    <div class="r"><b>Factuality</b> — <span>which sentences lean on things it can't back up?</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Why</h2>
+  <p>Most "is this good?" tools flatter you. WriteLens gives a working writer's read — clarity, persuasiveness, structure, and the sentences where the facts get shaky — with one concrete change to make first. Fast enough to run on every draft, honest enough to trust before you publish, or before you hand it back to a student.</p>
+</section>
+
+<!-- ===== BELOW THE FOLD: for developers ===== -->
+<section class="fold" id="developers">
+  <p class="flab">For developers · the API underneath</p>
+  <h2>One endpoint for the same signal, at scale</h2>
+  <p>The same read, as JSON — for the tools, pipelines, and agents that need a quality signal without standing up an LLM stack.</p>
   <div class="code">curl -X POST https://writelens.ivixivi.workers.dev/v1/score \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer wl_yourkey" \
   -d '{"text":"your text here"}'</div>
-
-  <p style="margin-top:14px">Returns:</p>
+  <p style="margin-top:10px">Returns:</p>
   <div class="code">{
   "clarity": 4,
   "persuasiveness": 3,
   "structure": 5,
   "factuality_concerns": ["unsubstantiated claims about 'experts'"],
   "overall": 4,
-  "suggestions": [
-    "Replace 'various factors' with the actual factors",
-    "Cite specific experts or remove the appeal to authority"
-  ],
+  "suggestions": ["Replace 'various factors' with the actual factors"],
   "char_count": 312
 }</div>
-</section>
+  <p class="hint" style="margin-top:6px">All scores are on a 0–10 scale.</p>
 
-<section>
-  <h2>Pricing</h2>
+  <h2 style="margin-top:32px">Pricing</h2>
   <div class="pricing">
     <div class="tier">
       <h3>Free</h3>
@@ -87,7 +141,7 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
       <ul>
         <li>50 calls / day / IP</li>
         <li>No API key needed</li>
-        <li>Web demo</li>
+        <li>The web reader above</li>
       </ul>
     </div>
     <div class="tier">
@@ -95,11 +149,10 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
       <div class="price">$49 <small style="font-size:14px;color:var(--muted)">/ 1000 calls</small></div>
       <ul>
         <li>API key + Bearer or X-API-Key auth</li>
-        <li>1000 included calls per 30-day paid period</li>
+        <li>1000 included calls per 30-day period</li>
         <li>For: writing tools, editors, pipelines, and agents</li>
-        <li>Subscription-gated access</li>
       </ul>
-      <button onclick="upgrade('paid_1000')" style="margin-top:12px;width:100%">Subscribe — $49 / 1000 calls</button>
+      <button onclick="upgrade('paid_1000')" style="margin-top:12px;width:100%">Get an API key — $49 / 1000 calls</button>
     </div>
   </div>
 </section>
@@ -112,11 +165,11 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
     <button type="submit" id="co-btn" style="margin-top:0;white-space:nowrap">Get payment details</button>
   </form>
   <div id="co-quote" style="display:none;margin-top:14px">
-    <div style="background:#0a0c10;border:1px solid var(--border);border-radius:8px;padding:14px;font-size:13px">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);gap:8px;flex-wrap:wrap"><span style="color:var(--muted);min-width:120px">Amount</span><span style="font-family:ui-monospace,monospace;font-size:12px;word-break:break-all" id="q-amount"></span></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);gap:8px;flex-wrap:wrap"><span style="color:var(--muted);min-width:120px">Asset / chain</span><span style="font-family:ui-monospace,monospace;font-size:12px;word-break:break-all" id="q-asset"></span></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);gap:8px;flex-wrap:wrap"><span style="color:var(--muted);min-width:120px">Send to</span><span style="font-family:ui-monospace,monospace;font-size:12px;word-break:break-all" id="q-address"></span><button onclick="copyAddr()" id="q-copy" type="button" style="font-size:11px;padding:4px 8px;margin-top:0">copy</button></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;gap:8px;flex-wrap:wrap"><span style="color:var(--muted);min-width:120px">Memo (quote id)</span><span style="font-family:ui-monospace,monospace;font-size:12px;word-break:break-all" id="q-quote"></span></div>
+    <div style="background:#0d0b12;border:1px solid var(--line);border-radius:8px;padding:14px;font-size:13px">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap"><span style="color:var(--muted);min-width:120px">Amount</span><span style="font-family:var(--mono);font-size:12px;word-break:break-all" id="q-amount"></span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap"><span style="color:var(--muted);min-width:120px">Asset / chain</span><span style="font-family:var(--mono);font-size:12px;word-break:break-all" id="q-asset"></span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap"><span style="color:var(--muted);min-width:120px">Send to</span><span style="font-family:var(--mono);font-size:12px;word-break:break-all" id="q-address"></span><button onclick="copyAddr()" id="q-copy" type="button" style="font-size:11px;padding:4px 8px;margin-top:0">copy</button></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;gap:8px;flex-wrap:wrap"><span style="color:var(--muted);min-width:120px">Memo (quote id)</span><span style="font-family:var(--mono);font-size:12px;word-break:break-all" id="q-quote"></span></div>
     </div>
     <p style="color:var(--muted);font-size:13px;margin-top:8px" id="q-instructions"></p>
     <form onsubmit="event.preventDefault(); confirmTx()" style="display:flex;gap:8px;margin-top:10px;align-items:flex-start">
@@ -128,19 +181,19 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
   <div id="co-key" class="result" style="display:none;margin-top:10px">—</div>
 </section>
 
-<section>
-  <h2>Why</h2>
-  <p>Most "is this good?" tools flatter you. WriteLens gives a working writer's read — <em>clarity, persuasiveness, structure</em>, and the sentences where the facts get shaky — with one concrete change to make first. Fast enough to run on every draft, honest enough to trust before you publish or hand it back to a student. Underneath is a clean API for the tools, pipelines, and agents that need the same signal at scale.</p>
-</section>
-
 <footer>
-  <p>WriteLens — part of <a href="https://studio.objectlessons.film">Object Lessons Studio</a> · <a href="/v1/score">the API</a></p>
+  <p>WriteLens — part of <a href="https://studio.objectlessons.film">Object Lessons Studio</a> · <a href="#developers">the API</a></p>
 </footer>
+
+</div>
 
 <script>
 async function score() {
   const t = document.getElementById('t').value;
   const r = document.getElementById('r');
+  const dot = document.getElementById('liveDot');
+  const label = document.getElementById('liveLabel');
+  const DEFAULT = "In this article we will discuss the various factors that may potentially impact certain things. Some experts believe that things might be affected. However, others say it could go differently. The truth is somewhere in between, perhaps.";
   r.textContent = 'scoring…';
   try {
     const resp = await fetch('/v1/score', {
@@ -150,12 +203,18 @@ async function score() {
     });
     const data = await resp.json();
     if (!resp.ok) { r.textContent = 'Error: ' + (data.error || resp.status); return; }
+    // real, live response — light the dot honestly
+    dot.classList.add('on'); label.textContent = 'WriteLens · quality score, live';
     const fc = (data.factuality_concerns || []).map(x => '• ' + x).join('\n') || '(none)';
     const sg = (data.suggestions || []).map(x => '• ' + x).join('\n') || '(none)';
-    r.innerHTML = `<span class="score">overall ${data.overall}/10</span><span class="score">clarity ${data.clarity}</span><span class="score">persuasion ${data.persuasiveness}</span><span class="score">structure ${data.structure}</span>\n\n<strong>Concerns</strong>\n${escapeHtml(fc)}\n\n<strong>Suggestions</strong>\n${escapeHtml(sg)}`;
+    r.innerHTML = `<span class="score">overall ${data.overall}/10</span><span class="score">clarity ${data.clarity}/10</span><span class="score">persuasion ${data.persuasiveness}/10</span><span class="score">structure ${data.structure}/10</span>\n\n<strong>Concerns</strong>\n${escapeHtml(fc)}\n\n<strong>Suggestions</strong>\n${escapeHtml(sg)}`;
     if (data.quota_remaining !== undefined) r.innerHTML += `\n\n<em>${data.quota_remaining} free calls remaining today</em>`;
   } catch (e) {
-    r.textContent = 'Network: ' + e.message;
+    // Live scorer unreachable (e.g. CORS not yet deployed). Never pass off a canned
+    // score as a read of the user's text — show the example's score, clearly labeled.
+    const edited = t.trim() !== DEFAULT.trim();
+    r.innerHTML = `<span class="score">overall 4/10</span><span class="score">clarity 4/10</span><span class="score">persuasion 3/10</span><span class="score">structure 5/10</span>\n\n<strong>Suggestions</strong>\n• Trade the abstractions ('various factors', 'certain things') for one concrete thing that actually changes for one real reader.` +
+      `<span class="note">Saved example — the live scorer isn't reachable from this page yet.${edited ? ' This is the read on the example paragraph, not your text; it goes live once the API is deployed.' : ''}</span>`;
   }
 }
 
@@ -167,7 +226,7 @@ let CO = { tier: null, quote_id: null, address: null, confirm_url: '/api/confirm
 
 function upgrade(tier) {
   CO.tier = tier;
-  document.getElementById('checkout-title').textContent = 'Subscribe — $49 / 1000 calls';
+  document.getElementById('checkout-title').textContent = 'Get an API key — $49 / 1000 calls';
   const sec = document.getElementById('checkout');
   sec.style.display = '';
   document.getElementById('co-quote').style.display = 'none';
@@ -201,7 +260,7 @@ async function startCheckout() {
       document.getElementById('co-quote').style.display = '';
       msg.style.color = 'var(--muted)'; msg.textContent = 'Send the exact amount, then paste your transaction hash below.';
     } else if (r.ok) {
-      msg.style.color = 'var(--good)'; msg.textContent = d.message || 'done';
+      msg.style.color = 'var(--live)'; msg.textContent = d.message || 'done';
     } else {
       msg.style.color = 'var(--accent)'; msg.textContent = d.error || 'could not start checkout';
     }
@@ -236,7 +295,7 @@ async function confirmTx() {
     if (r.ok) {
       const key = d.api_key || d.key;
       const keyBox = document.getElementById('co-key');
-      msg.style.color = 'var(--good)';
+      msg.style.color = 'var(--live)';
       msg.textContent = 'Subscription active. Save the API key shown below.';
       keyBox.style.display = '';
       keyBox.innerHTML = `<strong>API key (shown once)</strong>\n${escapeHtml(key)}\n\nID: ${escapeHtml(d.id)}\nPlan: $49 / ${escapeHtml(d.quota_calls)} calls\nPeriod ends: ${escapeHtml(d.period_end)}`;
