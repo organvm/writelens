@@ -1,0 +1,28 @@
+{
+  "name": "writelens",
+  "version": "1.0.0",
+  "description": "> Pay-per-call text quality scoring API. Free 50/day, then $0.01/call.",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/4444J99/writelens.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/4444J99/writelens/issues"
+  },
+  "homepage": "https://github.com/4444J99/writelens#readme",
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.16.18",
+    "@cloudflare/workers-types": "^4.20260619.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9",
+    "wrangler": "^4.103.0"
+  }
+}
