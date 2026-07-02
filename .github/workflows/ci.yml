@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: Build, test, and lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install CI tooling
+        run: npm install --no-save wrangler@latest typescript@latest @cloudflare/workers-types@latest oxlint@latest
+
+      - name: Lint
+        run: |
+          npx oxlint src/index.ts
+          npx tsc src/index.ts --noEmit --strict --target ES2022 --module ESNext --moduleResolution Bundler --lib ES2022,WebWorker --types @cloudflare/workers-types
+
+      - name: Test
+        run: node --test
+
+      - name: Build
+        run: npx wrangler deploy --dry-run
