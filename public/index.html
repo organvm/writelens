@@ -3,16 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WriteLens — text quality scoring API ($49 / 1000 calls)</title>
-<meta name="description" content="POST text, get back clarity / persuasiveness / structure / factuality scores. Free 50 calls/day, then $49 for 1000 authenticated API calls.">
+<title>WriteLens — a writing-quality instrument from Object Lessons Studio</title>
+<meta name="description" content="Paste a draft and get a concrete read on clarity, persuasion, structure, and the first sentence to fix. Free in the browser; API access is available for tools and teams.">
+<meta property="og:title" content="WriteLens — a writing-quality instrument" />
+<meta property="og:description" content="Paste a draft and get a concrete read on clarity, persuasion, structure, and the first sentence to fix." />
+<meta property="og:image" content="https://writelens.ivixivi.workers.dev/og/writelens.png" />
+<meta property="og:url" content="https://writelens.ivixivi.workers.dev" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://writelens.ivixivi.workers.dev/og/writelens.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root { --bg:#08090c; --fg:#f0f4f8; --muted:#7d8896; --accent:#22d3ee; --good:#4ade80; --card:#13161c; --border:#1c2129; }
+:root { --bg:#0c0b10; --fg:#f4efe7; --muted:#9f98aa; --accent:#e8b04b; --good:#4ec98a; --card:#15131d; --border:#2a2634; --accent-2:#8a7cf0; }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--fg);font-family:-apple-system,system-ui,sans-serif;line-height:1.6;padding:32px 16px;max-width:760px;margin:0 auto;font-size:16px}
+body{background:var(--bg);color:var(--fg);font-family:Inter,-apple-system,system-ui,sans-serif;line-height:1.6;padding:32px 16px;max-width:820px;margin:0 auto;font-size:16px}
 header{text-align:center;padding:24px 0 32px}
-h1{font-size:42px;letter-spacing:-0.03em}
+h1{font-family:Fraunces,Georgia,serif;font-size:48px;letter-spacing:0}
 h1 .lens{color:var(--accent)}
 .tag{color:var(--muted);font-size:18px;margin-top:6px}
+.studio{font-size:13px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;color:var(--muted)}
+.studio a{color:var(--muted)}
 section{margin:32px 0}
 h2{font-size:22px;margin-bottom:12px}
 .demo{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px}
@@ -38,9 +49,15 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 <body>
 
 <header>
+  <p class="studio"><a href="https://object-lessons-studio.pages.dev">Object Lessons Studio</a></p>
   <h1>Write<span class="lens">Lens</span></h1>
-  <p class="tag">Quality scores for any text. <code>POST /v1/score</code> → JSON.</p>
+  <p class="tag">A fast second reader for drafts that sound finished before they are.</p>
 </header>
+
+<section>
+  <h2>What it catches</h2>
+  <p>WriteLens reads a draft for the things a good editor marks in the margin: foggy claims, weak structure, generic persuasion, and the first sentence that should become specific. It is free to try in the browser, with no account and no upload beyond the scoring request.</p>
+</section>
 
 <section>
   <h2>Try it</h2>
@@ -51,9 +68,10 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
   </div>
 </section>
 
-<section>
-  <h2>API</h2>
-  <p><code>POST /v1/score</code></p>
+<section id="developers">
+  <h2>For tools and teams</h2>
+  <p>The same reader is available as a small API when you need a writing-quality signal inside an editor, classroom workflow, review queue, or publishing pipeline.</p>
+  <p style="margin-top:14px"><code>POST /v1/score</code></p>
   <div class="code">curl -X POST https://writelens.ivixivi.workers.dev/v1/score \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer wl_yourkey" \
@@ -119,19 +137,12 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 
 <section>
   <h2>Why</h2>
-  <p>Most "is this writing good" tools are aimed at humans. WriteLens is aimed at <em>code</em> — a single endpoint your product calls when it needs to grade a draft, filter low-quality content, or route based on style. Built for AI agents, content pipelines, moderation systems, and engineers who need a quality signal without standing up an LLM stack.</p>
+  <p>Most writing tools either rewrite for you or stay vague. WriteLens keeps the writer in charge: it names the weakness, gives a score you can compare, and leaves the revision in your hands.</p>
 </section>
 
 <footer>
-  <p>WriteLens • <a href="/v1/score">API root</a></p>
-  <p style="margin-top:10px">Sister products:</p>
-  <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:6px">
-    <a style="background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:14px;font-size:12px;text-decoration:none" href="https://promptscope.ivixivi.workers.dev">PromptScope</a>
-    <a style="background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:14px;font-size:12px;text-decoration:none" href="https://edgarflash.ivixivi.workers.dev">EdgarFlash</a>
-    <a style="background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:14px;font-size:12px;text-decoration:none" href="https://bountyscope.ivixivi.workers.dev">BountyScope</a>
-    <a style="background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:14px;font-size:12px;text-decoration:none" href="https://trendpulse.ivixivi.workers.dev">TrendPulse</a>
-    <a style="background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:14px;font-size:12px;text-decoration:none" href="https://vulnpulse.ivixivi.workers.dev">VulnPulse</a>
-  </div>
+  <p>WriteLens is part of <a href="https://object-lessons-studio.pages.dev">Object Lessons Studio</a>.</p>
+  <p style="margin-top:10px"><a href="#developers">API access</a> is available below the craft demo.</p>
 </footer>
 
 <script>
