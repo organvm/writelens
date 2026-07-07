@@ -29,7 +29,7 @@ jobs:
       - name: Lint
         run: |
           npx oxlint src/index.ts
-          npx tsc src/index.ts --noEmit --strict --target ES2022 --module ESNext --moduleResolution Bundler --lib ES2022,WebWorker --types @cloudflare/workers-types
+          npx tsc src/index.ts --noEmit --strict --target ES2022 --module ESNext --moduleResolution Bundler --lib ES2022 --types @cloudflare/workers-types
 
       - name: Test
         run: node --test
